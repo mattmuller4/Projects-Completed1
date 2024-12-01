@@ -1,0 +1,105 @@
+```{r}
+fam_diff <- c(37500, 130500, 12501, -2500, 12501, 137500, -150000, 440000, 112000, 30000,
+              5000, 35000, 112501, -16499, 37501, -139500, -2500, -2500, -17499, 28200,
+              -24950)
+install.packages("boot")
+library(boot)
+
+
+compute_mean <- function(data, indices) {
+  return(mean(data[indices]))
+}
+
+set.seed(123)
+
+bootstrap_results <- boot(data = fam_diff, statistic = compute_mean, R = 30)
+
+bootstrap_results
+
+boostrap_means <- bootstrap_results$t1
+boostrap_means
+```
+
+
+
+```{r}
+fam_diff <- c(37500, 130500, 12501, -2500, 12501, 137500, -150000, 440000, 112000, 30000,
+              5000, 35000, 112501, -16499, 37501, -139500, -2500, -2500, -17499, 28200,
+              -24950)
+
+compute_mean <- function(data, indices) {
+  return(mean(data[indices]))
+}
+
+set.seed(123)
+
+bootstrap_results <- boot(data = fam_diff, statistic = compute_mean, R = 30)
+
+print(bootstrap_results)
+
+bootstrap_means <- bootstrap_results$t
+print(bootstrap_means)
+
+overall_mean <- mean(bootstrap_means)
+print(overall_mean)
+
+```
+
+```{r}
+overall_sd <- sd(Bootstrap_Fam$`Fam Diff Boot`)
+overall_sd
+
+hist(Bootstrap_Fam$`Fam Diff Boot`)
+hist(Bootstrap_Fam$`Fam Diff`)
+```
+
+
+```{r}
+n_boot <- 51
+xbar_boot <- 41449.64
+sd_boot <- 77606.87
+cc <- 0.95
+Upperbound_boot <- qnorm(1-(1-cc)/2,xbar_boot,sd_boot/sqrt(n_boot))
+Lowerbound_boot <- qnorm((1-cc)/2,xbar_boot,sd_boot/sqrt(n_boot))
+
+cat('The 95% Confidence Interval for the Difference in Sales lies between:', Lowerbound_boot, '-', Upperbound_boot)
+```
+```{r}
+# Sample data for candlestick plot
+# Each row represents one candlestick with columns: Open, High, Low, Close
+candlestick_data <- data.frame(
+  Date = seq(as.Date("2023-01-01"), by = "day", length.out = 10),
+  Open = c(100, 105, 110, 115, 120, 118, 122, 125, 130, 128),
+  High = c(110, 112, 115, 122, 125, 124, 128, 130, 135, 132),
+  Low = c(98, 102, 108, 112, 115, 116, 120, 122, 125, 122),
+  Close = c(105, 110, 112, 120, 118, 124, 125, 128, 132, 126)
+)
+
+# Plotting the candlestick chart
+plot(candlestick_data$Date, candlestick_data$Open, type = "n", 
+     ylim = range(candlestick_data$Low, candlestick_data$High), 
+     main = "Candlestick Chart Example", xlab = "Date", ylab = "Price")
+
+# Draw the candlestick bars
+for (i in 1:nrow(candlestick_data)) {
+  # Candle body (open to close)
+  segments(candlestick_data$Date[i], candlestick_data$Open[i], 
+           candlestick_data$Date[i], candlestick_data$Close[i],
+           col = ifelse(candlestick_data$Close[i] >= candlestick_data$Open[i], "black", "red"))
+  
+  # Candle wicks (high to low)
+  segments(candlestick_data$Date[i], candlestick_data$High[i], 
+           candlestick_data$Date[i], candlestick_data$Low[i],
+           lwd = 2, col = ifelse(candlestick_data$Close[i] >= candlestick_data$Open[i], "black", "red"))
+}
+
+
+
+
+
+```
+
+
+
+
+

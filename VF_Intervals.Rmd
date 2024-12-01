@@ -1,0 +1,86 @@
+```{r}
+library(mosaic)
+library(readxl)
+VF <- read_xlsx('Cleaned Up VF Booking File.xlsx')
+```
+
+```{r}
+CW_Mean <- 88592.59
+```
+
+
+```{r}
+CW_Mean
+
+Web_Mean <- mean(Cleaned_Up_VF_Booking_File$`Web Diff`)
+Web_Mean
+
+CW_Sd<- 138786.0166
+
+CW_Sd
+
+Web_sd <- sd(Cleaned_Up_VF_Booking_File$`Web Diff`)
+Web_sd
+```
+```{r}
+CW_n <- 27
+Web_n <- length(Cleaned_Up_VF_Booking_File$`Web Diff`)
+
+CW_Standard_Error <- CW_Sd / CW_n
+Web_Standard_Error <- Web_sd / Web_n
+```
+
+```{r}
+Web_n <- 90
+xbar_Web <- 44207.61
+sd_Web <- 208193.7
+cc <- 0.95
+Web_Upperbound <- qnorm(1-(1-cc)/2,xbar_Web,sd_Web/sqrt(Web_n))
+Web_Lowerbound <- qnorm((1-cc)/2,xbar_Web,sd_Web/sqrt(Web_n))
+
+cat('The 95% Confidence Interval for the Difference in Sales lies between:', Web_Lowerbound, '-', Web_Upperbound)
+```
+
+```{r}
+n_CW <- 27
+xbar_CW <- 88592.59
+sd_CW <- 138786
+cc <- 0.95
+CW_Upperbound <- xbar_CW +qt(1-(1-cc)/2, n_CW-1)*sd_CW/sqrt(n_CW)
+CW_Lowerbound <- xbar_CW-qt(1-(1-cc)/2,n_CW-1)*sd_CW/sqrt(n_CW)
+
+cat('The 95% Confidence Interval for the Difference in Sales lies between:', CW_Lowerbound, '-', CW_Upperbound)
+```
+```{r}
+n_Fam <- 21
+xbar_Fam <- 36893.14286
+sd_Fam <- 117346.5148
+cc <- 0.95
+Upperbound_Fam <- xbar_Fam + qt(1-(1-cc)/2,n_Fam-1)*sd_Fam/sqrt(n_Fam)
+Lowerbound_Fam <- xbar_Fam - qt(1-(1-cc)/2, n_Fam-1)*sd_Fam/sqrt(n_Fam)
+
+cat('The 95% Confidence Interval for the Difference in Sales lies between:', Lowerbound_Fam, '-', Upperbound_Fam)
+```
+```{r}
+hist(Cleaned_Up_VF_Booking_File$`CW Diff`)
+hist(Cleaned_Up_VF_Booking_File$`Web Diff`)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
