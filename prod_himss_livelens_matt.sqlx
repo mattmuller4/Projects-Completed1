@@ -1,0 +1,311 @@
+config {
+    type: "table",
+    schema: "df_gcp_data_health_prod",
+    tags: ["data_health", "dashboard_prod", "upd_prod_4xday"],
+    assertions: {
+        uniqueKey: ["user_id", "livelens_event_id"]
+    }
+}
+
+  -- -- DB: https://lookerstudio.google.com/u/0/reporting/44e54fd1-a8f2-40e6-8fa6-c76a068c2fb9
+  -- -- Rubric: https://docs.google.com/spreadsheets/d/1YoAE7NIEQL-MmyuhZCcYXUCJNdu-gkQSzSGv5bfJjNI/edit?gid=1229146694#gid=1229146694
+
+/*SELECT
+  *,
+  SAFE_DIVIDE(last_30_days_user, SAFE_DIVIDE(older_events_user, active_months_user)) AS activity_ratio_user
+FROM (
+  SELECT
+    user_id,
+    COUNTIF(event_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)) AS last_30_days_user,
+    COUNTIF(event_date < DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)) AS older_events_user,
+    COUNT(DISTINCT CASE 
+      WHEN event_date < DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY) 
+      THEN FORMAT_DATE('%Y-%m', event_date) 
+    END) AS active_months_user
+  FROM
+    ${ref("prod_himss_livelens")}
+  GROUP BY
+    user_id
+)
+WHERE
+  older_events_user > 0*/
+
+/*SELECT
+  *,
+  SAFE_DIVIDE(last_30_days, SAFE_DIVIDE(older_events, active_months)) AS activity_ratio
+FROM (
+  SELECT
+    company_name,
+    COUNTIF(event_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)) AS last_30_days,
+    COUNTIF(event_date < DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)) AS older_events,
+    COUNT(DISTINCT FORMAT_DATE('%Y-%m', event_date)) AS active_months
+  FROM
+    ${ref("prod_himss_livelens")}
+  GROUP BY
+    company_name
+) base
+WHERE base.older_events > 0*/
+
+
+-- Step 1: Aggregate engagement metrics per company
+/*WITH metrics_by_company AS (
+  SELECT
+    company_name,
+    COUNTIF(event_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)) AS last_30_days_company,
+    COUNTIF(event_date < DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)) AS older_events_company,
+    COUNT(DISTINCT FORMAT_DATE('%Y-%m', event_date)) AS active_months_company
+  FROM
+    ${ref("prod_himss_livelens")}
+  GROUP BY
+    company_name
+)
+
+-- Step 2: Join metrics to original data
+SELECT
+  main.*,
+  metrics.last_30_days_company,
+  metrics.older_events_company,
+  metrics.active_months_company,
+  SAFE_DIVIDE(metrics.last_30_days_company, SAFE_DIVIDE(metrics.older_events_company, metrics.active_months_company)) AS activity_ratio_company
+FROM
+  ${ref("prod_himss_livelens")} AS main
+LEFT JOIN
+  metrics_by_company AS metrics
+USING (company_name)*/
+
+/*WITH metrics_by_user AS (
+  SELECT
+    user_id,
+    COUNTIF(event_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)) AS last_30_days_user,
+    COUNTIF(event_date < DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)) AS older_events_user,
+    COUNT(DISTINCT FORMAT_DATE('%Y-%m', event_date)) AS active_months_user
+  FROM
+    ${ref("prod_himss_livelens")}
+  GROUP BY
+    user_id
+)
+
+-- Step 2: Join metrics to original data
+SELECT
+  main.*,
+  metrics.last_30_days_user,
+  metrics.older_events_user,
+  metrics.active_months_user,
+  SAFE_DIVIDE(metrics.last_30_days_user, SAFE_DIVIDE(metrics.older_events_user, metrics.active_months_user)) AS activity_ratio_user
+FROM
+  ${ref("prod_himss_livelens")} AS main
+LEFT JOIN
+  metrics_by_user AS metrics
+USING (user_id)*/
+
+/*WITH metrics_by_user AS (
+  SELECT
+    user_id,
+    COUNTIF(event_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)) AS last_30_days_user,
+    COUNTIF(event_date < DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)) AS older_events_user,
+    COUNT(DISTINCT FORMAT_DATE('%Y-%m', event_date)) AS active_months_user
+  FROM
+    ${ref("prod_himss_livelens")}
+  GROUP BY
+    user_id
+),
+
+metrics_by_company AS (
+  SELECT
+    company_name,
+    COUNTIF(event_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)) AS last_30_days_company,
+    COUNTIF(event_date < DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)) AS older_events_company,
+    COUNT(DISTINCT FORMAT_DATE('%Y-%m', event_date)) AS active_months_company
+  FROM
+    ${ref("prod_himss_livelens")}
+  GROUP BY
+    company_name
+)
+
+-- Final Join to bring in both sets of metrics
+SELECT
+  main.*,
+
+  -- User-level metrics
+  user_metrics.last_30_days_user,
+  user_metrics.older_events_user,
+  user_metrics.active_months_user,
+  SAFE_DIVIDE(user_metrics.last_30_days_user, SAFE_DIVIDE(user_metrics.older_events_user, user_metrics.active_months_user)) AS activity_ratio_user,
+
+  -- Company-level metrics
+  company_metrics.last_30_days_company,
+  company_metrics.older_events_company,
+  company_metrics.active_months_company,
+  SAFE_DIVIDE(company_metrics.last_30_days_company, SAFE_DIVIDE(company_metrics.older_events_company, company_metrics.active_months_company)) AS activity_ratio_company
+
+FROM
+  ${ref("prod_himss_livelens")} AS main
+LEFT JOIN
+  metrics_by_user AS user_metrics
+USING (user_id)
+LEFT JOIN
+  metrics_by_company AS company_metrics
+USING (company_name)*/
+
+
+-- User-level metrics
+WITH metrics_by_user AS (
+  SELECT
+    user_id,
+    COUNTIF(event_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)) AS last_30_days_user,
+    COUNTIF(event_date < DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)) AS older_events_user,
+    COUNT(DISTINCT FORMAT_DATE('%Y-%m', event_date)) AS active_months_user
+  FROM ${ref("prod_himss_livelens")}
+  GROUP BY user_id
+),
+
+-- Company-level metrics
+metrics_by_company AS (
+  SELECT
+    company_name,
+    COUNTIF(event_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)) AS last_30_days_company,
+    COUNTIF(event_date < DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)) AS older_events_company,
+    COUNT(DISTINCT FORMAT_DATE('%Y-%m', event_date)) AS active_months_company
+  FROM ${ref("prod_himss_livelens")}
+  GROUP BY company_name
+),
+
+-- Base data (e.g., raw events, or a deduped user-company view)
+main AS (
+  SELECT
+    *,
+    CASE
+    -- Healthcare & Life Sciences
+    WHEN LOWER(industry) LIKE '%hospital%' 
+      OR LOWER(industry) LIKE '%clinic%' 
+      OR LOWER(industry) LIKE '%pharma%' 
+      OR LOWER(industry) LIKE '%medical%' 
+      OR LOWER(industry) LIKE '%ehr%' 
+      OR LOWER(industry) LIKE '%pacs%' 
+      OR LOWER(industry) LIKE '%health%' 
+      OR LOWER(industry) LIKE '%lab%' 
+      OR LOWER(industry) LIKE '%telemedicine%' 
+    THEN 'Healthcare & Life Sciences'
+
+    -- Education
+    WHEN LOWER(industry) LIKE '%education%' 
+      OR LOWER(industry) LIKE '%university%' 
+      OR LOWER(industry) LIKE '%college%' 
+      OR LOWER(industry) LIKE '%academic%' 
+      OR LOWER(industry) LIKE '%school%' 
+      OR LOWER(industry) LIKE '%research%' 
+    THEN 'Education'
+
+    -- Software & Technology
+    WHEN LOWER(industry) LIKE '%software%' 
+      OR LOWER(industry) LIKE '%it services%' 
+      OR LOWER(industry) LIKE '%crm%' 
+      OR LOWER(industry) LIKE '%erp%' 
+      OR LOWER(industry) LIKE '%security%' 
+      OR LOWER(industry) LIKE '%network%' 
+    THEN 'Software & Technology'
+
+    -- Financial Services
+    WHEN LOWER(industry) LIKE '%finance%' 
+      OR LOWER(industry) LIKE '%bank%' 
+      OR LOWER(industry) LIKE '%investment%' 
+      OR LOWER(industry) LIKE '%insurance%' 
+      OR LOWER(industry) LIKE '%lending%' 
+      OR LOWER(industry) LIKE '%credit%' 
+    THEN 'Financial Services'
+
+    -- Retail & Consumer Goods
+    WHEN LOWER(industry) LIKE '%retail%' 
+      OR LOWER(industry) LIKE '%store%' 
+      OR LOWER(industry) LIKE '%consumer%' 
+      OR LOWER(industry) LIKE '%shopping%' 
+    THEN 'Retail & Consumer Goods'
+
+    -- Government & Non-Profit
+    WHEN LOWER(industry) LIKE '%government%' 
+      OR LOWER(industry) LIKE '%state%' 
+      OR LOWER(industry) LIKE '%federal%' 
+      OR LOWER(industry) LIKE '%non-profit%' 
+      OR LOWER(industry) LIKE '%religious%' 
+      OR LOWER(industry) LIKE '%charitable%' 
+      OR LOWER(industry) LIKE '%tribal%' 
+    THEN 'Government & Non-Profit'
+
+    -- Professional Services
+    WHEN LOWER(industry) LIKE '%consulting%' 
+      OR LOWER(industry) LIKE '%legal%' 
+      OR LOWER(industry) LIKE '%law%' 
+      OR LOWER(industry) LIKE '%staffing%' 
+      OR LOWER(industry) LIKE '%recruiting%' 
+    THEN 'Professional Services'
+
+    -- Manufacturing
+    WHEN LOWER(industry) LIKE '%manufactur%' 
+      OR LOWER(industry) LIKE '%machinery%' 
+      OR LOWER(industry) LIKE '%equipment%' 
+      OR LOWER(industry) LIKE '%process manufacturing%' 
+    THEN 'Manufacturing'
+
+    -- Media & Entertainment
+    WHEN LOWER(industry) LIKE '%media%' 
+      OR LOWER(industry) LIKE '%entertain%' 
+      OR LOWER(industry) LIKE '%music%' 
+      OR LOWER(industry) LIKE '%theater%' 
+      OR LOWER(industry) LIKE '%broadcast%' 
+      OR LOWER(industry) LIKE '%publishing%' 
+    THEN 'Media & Entertainment'
+
+    -- Transportation & Logistics
+    WHEN LOWER(industry) LIKE '%transport%' 
+      OR LOWER(industry) LIKE '%freight%' 
+      OR LOWER(industry) LIKE '%logistics%' 
+      OR LOWER(industry) LIKE '%airline%' 
+      OR LOWER(industry) LIKE '%automotive%' 
+    THEN 'Transportation & Logistics'
+
+    -- Real Estate & Construction
+    WHEN LOWER(industry) LIKE '%real estate%' 
+      OR LOWER(industry) LIKE '%construction%' 
+      OR LOWER(industry) LIKE '%architecture%' 
+      OR LOWER(industry) LIKE '%engineering%' 
+    THEN 'Real Estate & Construction'
+
+    -- Energy & Environment
+    WHEN LOWER(industry) LIKE '%oil%' 
+      OR LOWER(industry) LIKE '%gas%' 
+      OR LOWER(industry) LIKE '%utility%' 
+      OR LOWER(industry) LIKE '%energy%' 
+      OR LOWER(industry) LIKE '%environment%' 
+      OR LOWER(industry) LIKE '%waste%' 
+    THEN 'Energy & Environment'
+
+    ELSE 'Other / Miscellaneous'
+  END AS industry_group
+  FROM ${ref("prod_himss_livelens")}
+)
+
+-- Final SELECT with JOINs
+SELECT
+  main.*,
+
+  -- User-level metrics
+  user_metrics.last_30_days_user,
+  user_metrics.older_events_user,
+  user_metrics.active_months_user,
+  SAFE_DIVIDE(user_metrics.last_30_days_user, SAFE_DIVIDE(user_metrics.older_events_user, user_metrics.active_months_user)) AS activity_ratio_user,
+
+  -- Company-level metrics
+  company_metrics.last_30_days_company,
+  company_metrics.older_events_company,
+  company_metrics.active_months_company,
+  SAFE_DIVIDE(company_metrics.last_30_days_company, SAFE_DIVIDE(company_metrics.older_events_company, company_metrics.active_months_company)) AS activity_ratio_company
+
+FROM main
+LEFT JOIN metrics_by_user AS user_metrics USING (user_id)
+LEFT JOIN metrics_by_company AS company_metrics USING (company_name)
+
+
+
+
+
+
